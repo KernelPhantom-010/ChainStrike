@@ -10,6 +10,7 @@
 #include <QString>
 #include <QListView>
 std::vector<QString> routesCreated;
+QString log_beg = "[CNSE_LOG] ";
 void MainWindow::routeAdding(){
 
     bool ok, ok2, illegalReg = false;
@@ -41,9 +42,12 @@ void MainWindow::binaryLoading(){
 
     QString fileName = QFileDialog::getOpenFileName(nullptr, "Select Binary to analyze", QDir::currentPath(), "All Files(*);; Executable Files (*.exe)");
     if (!fileName.isEmpty()){
-
+        ui->plainTextEdit->appendPlainText(log_beg + "File provided for analysis -> ['" + fileName + "']..");
+    }else{
+        ui->plainTextEdit->appendPlainText(log_beg + "Something went wrong while trying to load the file..");
+        return;
     }
-
+    //hier mit Capstone arbeiten und disassembly code zeile für zeile in 'listView' eintragen.
 }
 
 
