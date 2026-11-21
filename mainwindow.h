@@ -24,6 +24,5 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QDialog* routeAddingDialog;
-    QFileDialog* chooseFile;
 };
 #endif // MAINWINDOW_H

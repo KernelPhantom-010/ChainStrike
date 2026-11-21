@@ -142,7 +142,7 @@ MainWindow::MainWindow(QWidget *parent)
     mainLayout->addWidget(rightContainer, 1);
 
     connect(ui->pushButton_2, &QPushButton::clicked, this, &MainWindow::routeAdding);
-    connect(ui->pushButton, &QPushButton::clicked, this, &MainWindow::chooseFile);
+    connect(ui->pushButton, &QPushButton::clicked, this, &MainWindow::binaryLoading);
 
 }
 
