@@ -1,3 +1,4 @@
+#include <windows.h>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QVBoxLayout>
@@ -6,6 +7,13 @@
 #include <QListView>
 
 void MainWindow::routeAdding(){
+
+    bool ok;
+    QString enteredText = QInputDialog::getText(this, "Add a new Route", "Enter the Route-Name", QLineEdit::Normal, "", &ok);
+
+    if (ok == true && !enteredText.isEmpty()){
+        ui->plainTextEdit->appendPlainText("[CNSE_LOG] New Route " + enteredText + "added.");
+    }
 
 }
 
@@ -39,28 +47,64 @@ MainWindow::MainWindow(QWidget *parent)
     for (QListView* lv : {ui->listView, ui->listView_2, ui->listView_3}) {
         lv->setFrameShape(QFrame::NoFrame);
         lv->setAttribute(Qt::WA_StyledBackground, true);
-        lv->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        lv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
         lv->setStyleSheet(listStyle);
     }
 
-    QWidget *rightContainer = new QWidget(ui->centralwidget);
-    QVBoxLayout *rightLayout = new QVBoxLayout(rightContainer);
-    rightLayout->setContentsMargins(0, 0, 0, 0);
-    rightLayout->setSpacing(8);
 
-    rightLayout->addWidget(ui->label);
-    rightLayout->addWidget(ui->listView, 1);
+    QWidget *rightContainer = new QWidget(ui->centralwidget);
+    QVBoxLayout *rightMainLayout = new QVBoxLayout(rightContainer);
+    rightMainLayout->setContentsMargins(8, 8, 8, 8);
+    rightMainLayout->setSpacing(8);
+
+
+    QHBoxLayout *topRow = new QHBoxLayout();
+
+
+    QVBoxLayout *routesLayout = new QVBoxLayout();
+    routesLayout->addWidget(ui->label_2);
+    routesLayout->addWidget(ui->listView_2);
+
+
+    QVBoxLayout *disasmLayout = new QVBoxLayout();
+    disasmLayout->addWidget(ui->label);
+    disasmLayout->addWidget(ui->listView);
+
+
+    QVBoxLayout *logsLayout = new QVBoxLayout();
+    logsLayout->addWidget(ui->label_3);
+    logsLayout->addWidget(ui->plainTextEdit);
+
+
+    topRow->addLayout(routesLayout, 1);
+    topRow->addLayout(disasmLayout, 3);
+    topRow->addLayout(logsLayout, 1);
+
 
     QHBoxLayout *bottomRow = new QHBoxLayout();
-    bottomRow->setSpacing(8);
-    bottomRow->addWidget(ui->listView_2, 1);
-    bottomRow->addWidget(ui->listView_3, 1);
-    rightLayout->addLayout(bottomRow, 2);
+
+
+    QVBoxLayout *exploitLayout = new QVBoxLayout();
+    exploitLayout->addWidget(ui->label_5);
+    exploitLayout->addWidget(ui->plainTextEdit_2);
+
+
+    QVBoxLayout *chainsLayout = new QVBoxLayout();
+    chainsLayout->addWidget(ui->label_4);
+    chainsLayout->addWidget(ui->listView_3);
+
+    bottomRow->addLayout(exploitLayout, 1);
+    bottomRow->addLayout(chainsLayout, 1);
+
+
+    rightMainLayout->addLayout(topRow, 1);
+    rightMainLayout->addLayout(bottomRow, 1);
 
 
     QHBoxLayout *mainLayout = new QHBoxLayout(ui->centralwidget);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
+
     mainLayout->addWidget(ui->widget);
     mainLayout->addWidget(rightContainer, 1);
 
