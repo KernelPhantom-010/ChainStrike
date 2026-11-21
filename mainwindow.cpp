@@ -25,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    // --- Sidebar ---
+
     ui->widget->setStyleSheet("background: black; border-radius: 10px;");
     ui->widget->setMinimumWidth(171);
     ui->widget->setMaximumWidth(171);
