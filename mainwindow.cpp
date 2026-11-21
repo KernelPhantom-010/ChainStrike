@@ -2,7 +2,14 @@
 #include "ui_mainwindow.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QInputDialog>
 #include <QListView>
+
+void MainWindow::routeAdding(){
+
+}
+
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -57,6 +64,7 @@ MainWindow::MainWindow(QWidget *parent)
     mainLayout->addWidget(ui->widget);
     mainLayout->addWidget(rightContainer, 1);
 
+    connect(ui->pushButton_2, &QPushButton::clicked, this, &MainWindow::routeAdding);
 
 
 }

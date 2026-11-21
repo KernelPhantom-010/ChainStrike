@@ -18,9 +18,10 @@ public:
     ~MainWindow() override;
 
 private slots:
-
+    void routeAdding();
 
 private:
     Ui::MainWindow *ui;
+    QDialog* routeAddingDialog;
 };
 #endif // MAINWINDOW_H
