@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 #include <QModelIndexList>
 #include <QMainWindow>
-
+#include <QFileDialog>
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -19,9 +19,11 @@ public:
 
 private slots:
     void routeAdding();
+    void binaryLoading();
 
 private:
     Ui::MainWindow *ui;
     QDialog* routeAddingDialog;
+    QFileDialog* chooseFile;
 };
 #endif // MAINWINDOW_H

@@ -1,18 +1,47 @@
 #include <windows.h>
+#include <iostream>
+#include <string>
+#include <vector>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QInputDialog>
+#include <QString>
 #include <QListView>
-
+std::vector<QString> routesCreated;
 void MainWindow::routeAdding(){
 
-    bool ok;
+    bool ok, ok2, illegalReg = false;
     QString enteredText = QInputDialog::getText(this, "Add a new Route", "Enter the Route-Name", QLineEdit::Normal, "", &ok);
+    QString whichRegister = QInputDialog::getText(this, "Add a new Route", "Enter the Register you want to change/view\nExample inputs: rax, rcx, rdx, rsi, rdi,\nr8-r11", QLineEdit::Normal, "", &ok2);
+    std::vector<std::string> allowedRegisters = {"rax", "rcx", "rdx", "rsi", "rdi", "r8", "r9", "r10", "r11"};
+    for (int initt = 0; initt < allowedRegisters.size(); initt++){
+        std::string checkit = whichRegister.toStdString();
+        if (checkit.compare(allowedRegisters[initt]) != 0){
+            illegalReg = true;
+        }else if (checkit.compare(allowedRegisters[initt]) == 0){
+            illegalReg = false;
+            break;
+        }
+    }
+    if (illegalReg == true){            ui->plainTextEdit->appendPlainText("[CNSE_LOG] Illegal register entered. Aborting..");
+        return;}
 
     if (ok == true && !enteredText.isEmpty()){
-        ui->plainTextEdit->appendPlainText("[CNSE_LOG] New Route " + enteredText + "added.");
+        ui->plainTextEdit->appendPlainText("[CNSE_LOG] New Route ['" + enteredText + "'] added.");
+        ui->plainTextEdit->appendPlainText("[CNSE_LOG] Searching for register:" + whichRegister + " in binary..");
+        routesCreated.push_back(enteredText);
+    }
+
+}
+
+
+void MainWindow::binaryLoading(){
+
+    QString fileName = QFileDialog::getOpenFileName(nullptr, "Select Binary to analyze", QDir::currentPath(), "All Files(*);; Executable Files (*.exe)");
+    if (!fileName.isEmpty()){
+
     }
 
 }
@@ -109,7 +138,7 @@ MainWindow::MainWindow(QWidget *parent)
     mainLayout->addWidget(rightContainer, 1);
 
     connect(ui->pushButton_2, &QPushButton::clicked, this, &MainWindow::routeAdding);
-
+    connect(ui->pushButton, &QPushButton::clicked, this, &MainWindow::chooseFile);
 
 }
 
