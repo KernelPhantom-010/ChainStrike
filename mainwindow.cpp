@@ -10,6 +10,7 @@
 #include <QInputDialog>
 #include <QString>
 #include <QListView>
+#include <QStringListModel>
 #include <capstone/capstone.h>
 std::vector<QString> routesCreated;
 QString log_beg = "[CNSE_LOG] ";
@@ -68,29 +69,65 @@ void MainWindow::binaryLoading(){
         ui->plainTextEdit->appendPlainText(log_beg + "Successfully wrote the file content into memory.");
     }
     fileStreamm.close();
-
+    if (fileContent.size() < sizeof(IMAGE_DOS_HEADER)) {
+        ui->plainTextEdit->appendPlainText("Invalid file: too small.");
+        return;
+    }
     if (cs_open(CS_ARCH_X86, CS_MODE_64, &disasHandle) != CS_ERR_OK){
         ui->plainTextEdit->appendPlainText(log_beg + "Couldn't open the file in Capstone..");
         return;
     }
-    count = cs_disasm(disasHandle, reinterpret_cast<uint8_t*>(fileContent.data()), fileContent.size(), 0x1000, 0, &ins);
-    if (count > 0){
-        size_t j;
-        ui->plainTextEdit->appendPlainText(log_beg + "Successfully read bytes! Printing in hex..");
-        for (int j = 0; j < count; j++){
-            ui->plainTextEdit->appendPlainText(
-                QString::asprintf(
+
+    auto dosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(fileContent.data());
+    if (dosHeader->e_magic != IMAGE_DOS_SIGNATURE) {
+        ui->plainTextEdit->appendPlainText("Invalid DOS signature.");
+        return;
+    }if (dosHeader->e_lfanew < 0 ||
+        static_cast<size_t>(dosHeader->e_lfanew) >
+            fileContent.size() - sizeof(IMAGE_NT_HEADERS64)) {
+        ui->plainTextEdit->appendPlainText("Invalid PE header offset.");
+        return;
+    }
+
+    auto ntHeader = reinterpret_cast<PIMAGE_NT_HEADERS64>(fileContent.data() + dosHeader->e_lfanew);
+    if (ntHeader->Signature != IMAGE_NT_SIGNATURE) {
+        ui->plainTextEdit->appendPlainText("Invalid PE signature.");
+        return;
+    }
+    auto section = IMAGE_FIRST_SECTION(ntHeader);
+    QStringListModel* model = new QStringListModel(this);
+    ui->listView->setModel(model);
+    for (int i = 0; i < ntHeader->FileHeader.NumberOfSections; ++i, section++){
+        if (strcmp(reinterpret_cast<const char*>(section->Name), ".text") == 0){
+            const uint8_t* code = reinterpret_cast<const uint8_t*>(fileContent.data() + section->PointerToRawData);
+            size_t codeSize = section->SizeOfRawData;
+            size_t count = cs_disasm(disasHandle, code, codeSize, ntHeader->OptionalHeader.ImageBase + section->VirtualAddress, 0, &ins);
+            if (count > 0){
+                size_t j;
+                ui->plainTextEdit->appendPlainText(log_beg + "Successfully read bytes! Printing in hex..");
+
+            }else{
+                ui->plainTextEdit->appendPlainText(log_beg + "Error -> failed to disassemble given code!");
+                cs_close(&disasHandle);
+                return;
+            }
+            QStringList items;
+
+            for (size_t j = 0; j < count; j++)
+            {
+                items.append(QString::asprintf(
                     "0x%" PRIx64 ":\t%s\t\t%s",
                     ins[j].address,
                     ins[j].mnemonic,
                     ins[j].op_str
-                    )
-                );
+                    ));
+            }
+
+            model->setStringList(items);
+
         }
-    }else{
-        ui->plainTextEdit->appendPlainText(log_beg + "Error -> failed to disassemble given code!");
-        return;
     }
+    cs_free(ins, count);
     cs_close(&disasHandle);
 }
 
@@ -120,12 +157,26 @@ MainWindow::MainWindow(QWidget *parent)
     sidebarLayout->addWidget(ui->pushButton_3);
     sidebarLayout->addStretch(1);
 
-    QString listStyle = "QListView { border-radius: 10px; background-color: white; padding: 6px; }";
+
+    ui->listView->setStyleSheet(
+        "QListView {"
+        "   background-color: white;"
+        "   border-radius: 10px;"
+        "   padding: 6px;"
+        "   color: black;"
+        "}"
+        "QListView::item:selected {"
+        "   background-color: #252a40;"
+        "   color: white;"
+        "}"
+        "QListView::item:hover {"
+        "   background-color: #e0e4f0;"
+        "}"
+        );
     for (QListView* lv : {ui->listView, ui->listView_2, ui->listView_3}) {
         lv->setFrameShape(QFrame::NoFrame);
         lv->setAttribute(Qt::WA_StyledBackground, true);
         lv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
-        lv->setStyleSheet(listStyle);
     }
 
 
