@@ -9,7 +9,8 @@ CONFIG += c++17
 SOURCES += \
     main.cpp \
     mainwindow.cpp
-
+    INCLUDEPATH += $$PWD/capstone/include
+    LIBS += -L$$PWD/capstone/build/Release -lcapstone
 HEADERS += \
     mainwindow.h
 

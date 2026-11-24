@@ -6,9 +6,11 @@
 #include "ui_mainwindow.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <fstream>
 #include <QInputDialog>
 #include <QString>
 #include <QListView>
+#include <capstone/capstone.h>
 std::vector<QString> routesCreated;
 QString log_beg = "[CNSE_LOG] ";
 void MainWindow::routeAdding(){
@@ -47,7 +49,49 @@ void MainWindow::binaryLoading(){
         ui->plainTextEdit->appendPlainText(log_beg + "Something went wrong while trying to load the file..");
         return;
     }
+
     //hier mit Capstone arbeiten und disassembly code zeile für zeile in 'listView' eintragen.
+
+    csh disasHandle;
+    cs_insn * ins;
+    size_t count = 0;
+
+    //open the file in binary mode
+
+    std::ifstream fileStreamm(fileName.toStdString().c_str(), std::ios::in | std::ios::binary);
+    if (!fileStreamm){ui->plainTextEdit->appendPlainText(log_beg + "Couldn't open the file properly."); return;}
+    fileStreamm.seekg(0, std::ios::end);
+    std::streamsize size = fileStreamm.tellg();
+    fileStreamm.seekg(0, std::ios::beg);
+    std::vector<char> fileContent(size);
+    if (fileStreamm.read(fileContent.data(), size)){
+        ui->plainTextEdit->appendPlainText(log_beg + "Successfully wrote the file content into memory.");
+    }
+    fileStreamm.close();
+
+    if (cs_open(CS_ARCH_X86, CS_MODE_64, &disasHandle) != CS_ERR_OK){
+        ui->plainTextEdit->appendPlainText(log_beg + "Couldn't open the file in Capstone..");
+        return;
+    }
+    count = cs_disasm(disasHandle, reinterpret_cast<uint8_t*>(fileContent.data()), fileContent.size(), 0x1000, 0, &ins);
+    if (count > 0){
+        size_t j;
+        ui->plainTextEdit->appendPlainText(log_beg + "Successfully read bytes! Printing in hex..");
+        for (int j = 0; j < count; j++){
+            ui->plainTextEdit->appendPlainText(
+                QString::asprintf(
+                    "0x%" PRIx64 ":\t%s\t\t%s",
+                    ins[j].address,
+                    ins[j].mnemonic,
+                    ins[j].op_str
+                    )
+                );
+        }
+    }else{
+        ui->plainTextEdit->appendPlainText(log_beg + "Error -> failed to disassemble given code!");
+        return;
+    }
+    cs_close(&disasHandle);
 }
 
 

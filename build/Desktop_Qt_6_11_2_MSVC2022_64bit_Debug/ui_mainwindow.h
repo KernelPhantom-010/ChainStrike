@@ -91,6 +91,7 @@ public:
         font3.setFamilies({QString::fromUtf8("Consolas")});
         font3.setBold(true);
         plainTextEdit->setFont(font3);
+        plainTextEdit->setReadOnly(true);
         label_3 = new QLabel(centralwidget);
         label_3->setObjectName("label_3");
         label_3->setGeometry(QRect(1000, 0, 91, 16));
@@ -107,6 +108,7 @@ public:
         plainTextEdit_2->setObjectName("plainTextEdit_2");
         plainTextEdit_2->setGeometry(QRect(310, 280, 431, 321));
         plainTextEdit_2->setFont(font2);
+        plainTextEdit_2->setReadOnly(true);
         listView_2 = new QListView(centralwidget);
         listView_2->setObjectName("listView_2");
         listView_2->setGeometry(QRect(170, 20, 131, 581));
@@ -133,7 +135,7 @@ public:
 
     void retranslateUi(QMainWindow *MainWindow)
     {
-        MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "MainWindow", nullptr));
+        MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "ChainStrike Public Release", nullptr));
         pushButton->setText(QCoreApplication::translate("MainWindow", "Choose Binary", nullptr));
         pushButton_2->setText(QCoreApplication::translate("MainWindow", "New Route", nullptr));
         pushButton_3->setText(QCoreApplication::translate("MainWindow", "Try Exploit", nullptr));
