@@ -13,6 +13,12 @@
 #include <QStringListModel>
 #include <capstone/capstone.h>
 std::vector<QString> routesCreated;
+struct chainsList{
+    uint64_t addressOfGadget;
+    char* instructionFirst;
+    char* instructionLast;
+};
+std::vector<chainsList> chainsListAppend;
 QString log_beg = "[CNSE_LOG] ";
 void MainWindow::routeAdding(){
 
@@ -96,39 +102,73 @@ void MainWindow::binaryLoading(){
     }
     auto section = IMAGE_FIRST_SECTION(ntHeader);
     QStringListModel* model = new QStringListModel(this);
+    model->setStringList(QStringList());
     ui->listView->setModel(model);
-    for (int i = 0; i < ntHeader->FileHeader.NumberOfSections; ++i, section++){
-        if (strcmp(reinterpret_cast<const char*>(section->Name), ".text") == 0){
-            const uint8_t* code = reinterpret_cast<const uint8_t*>(fileContent.data() + section->PointerToRawData);
-            size_t codeSize = section->SizeOfRawData;
-            size_t count = cs_disasm(disasHandle, code, codeSize, ntHeader->OptionalHeader.ImageBase + section->VirtualAddress, 0, &ins);
-            if (count > 0){
-                size_t j;
-                ui->plainTextEdit->appendPlainText(log_beg + "Successfully read bytes! Printing in hex..");
-
-            }else{
-                ui->plainTextEdit->appendPlainText(log_beg + "Error -> failed to disassemble given code!");
-                cs_close(&disasHandle);
-                return;
-            }
-            QStringList items;
-
-            for (size_t j = 0; j < count; j++)
-            {
-                items.append(QString::asprintf(
-                    "0x%" PRIx64 ":\t%s\t\t%s",
-                    ins[j].address,
-                    ins[j].mnemonic,
-                    ins[j].op_str
-                    ));
-            }
-
-            model->setStringList(items);
-
-        }
+    auto *model_chains = new QStringListModel(this);
+    ui->listView_3->setModel(model_chains);
+    model_chains->setStringList(QStringList());
+    bool raxEntered = false;
+    bool validd = false;
+    QString chosenRegister = QInputDialog::getText(this, "", "Enter the register you're searching for", QLineEdit::Normal, "", &raxEntered);
+    std::vector<std::string> allowedRegisters = {"rax", "rcx", "rdx", "rsi", "rdi", "r8", "r9", "r10", "r11"};
+    for (int j = 0 ; j < allowedRegisters.size(); j++){
+        if (chosenRegister == allowedRegisters[j]){validd = true; break;}
     }
+    if (validd){
+        for (int i = 0; i < ntHeader->FileHeader.NumberOfSections; ++i, section++){
+            if (strcmp(reinterpret_cast<const char*>(section->Name), ".text") == 0){
+                const uint8_t* code = reinterpret_cast<const uint8_t*>(fileContent.data() + section->PointerToRawData);
+                size_t codeSize = section->SizeOfRawData;
+                size_t count = cs_disasm(disasHandle, code, codeSize, ntHeader->OptionalHeader.ImageBase + section->VirtualAddress, 0, &ins);
+                if (count > 0){
+                    size_t j;
+                    ui->plainTextEdit->appendPlainText(log_beg + "Successfully read bytes! Printing in hex..");
+                }else{
+                    ui->plainTextEdit->appendPlainText(log_beg + "Error -> failed to disassemble given code!");
+                    cs_close(&disasHandle);
+                    return;
+                }
+                QStringList gadgets;
+                QStringList items;
+
+                for (size_t j = 0; j < count; j++)
+                {
+
+                    items.append(QString::asprintf(
+                        "0x%" PRIx64 ":\t%s\t\t%s",
+                        ins[j].address, ins[j].mnemonic, ins[j].op_str));
+
+                    bool currentIsRet = QString::compare(ins[j].mnemonic, "ret", Qt::CaseInsensitive) == 0;
+
+                    if (currentIsRet)
+                    {
+
+                        if (j > 0 && QString::compare(ins[j - 1].mnemonic, "pop", Qt::CaseInsensitive) == 0)
+                        {
+                            if (QString::compare(ins[j-1].op_str, chosenRegister, Qt::CaseInsensitive) == 0){
+                                gadgets.append(QString::asprintf(
+                                    "0x%" PRIx64 ":\t%s %s ; %s",
+                                    ins[j - 1].address,
+                                    ins[j - 1].mnemonic, ins[j - 1].op_str,
+                                    ins[j].mnemonic));
+                            }
+                        }
+                    }
+                }
+                model_chains->setStringList(gadgets);
+                model->setStringList(items);
+            }
+        }
+    }else{
+        ui->plainTextEdit->appendPlainText(log_beg + "Aborting. Only 64-Bit registers allowed!");
+        cs_close(&disasHandle);
+        return;
+    }
+
     cs_free(ins, count);
     cs_close(&disasHandle);
+
+    //hier mit 'Chains-Found' window weiter machen
 }
 
 
